@@ -3,12 +3,31 @@ watch = require("gulp-watch");
 coffee = require("gulp-coffee");
 stylus = require("gulp-stylus");
 concat = require("gulp-concat");
+uglify = require("gulp-uglify");
+sourcemaps = require("gulp-sourcemaps");
+copy = require("gulp-copy");
+
 
 src = {
+	copy : {
+		gameFiles : [
+			"game/SpaceInvaders.js",
+			"game/sprites/invaders.png",
+			"game/sprites/cannon.png",
+		]		
+	},
 	game : {
-		coffee : "game/coffee/*.coffee",
+		coffee : [
+			"game/coffee/Destroyable.coffee",
+			"game/coffee/Sprite.coffee",
+			"game/coffee/Cannon.coffee",
+			"game/coffee/Invader.coffee",
+			"game/coffee/Keyboard.coffee",
+			"game/coffee/ResourceLoader.coffee",
+			"game/coffee/SpaceInvadersGame.coffee",
+		],
 		js : "game/js/*.js",
-		libs : "game/js/libs/**/*.coffee"
+		compiled : "game/SpaceInvaders.js"
 	},
 	example : {
 		coffee  : "example/js/coffee/*.coffee",
@@ -17,6 +36,7 @@ src = {
 }
 
 dest = {
+	gameCopy : "example/js/SpaceInvaders/",
 	game : {
 		js : "game/js",
 		concatFolder : "game/",
@@ -42,21 +62,41 @@ gulp.task('example-stylus',function(){
 
 gulp.task('game-coffee',function(){
 	return gulp.src(src.game.coffee)
+	.pipe(sourcemaps.init())
 	.pipe(coffee())
-	.pipe(gulp.dest(dest.game.js));
-})
-
-gulp.task('game-concat',function(){
-	return gulp.src([src.game.js,""])
 	.pipe(concat(dest.game.concatFile))
+	.pipe(sourcemaps.write())
 	.pipe(gulp.dest(dest.game.concatFolder));
 })
 
-gulp.task('watch', function() {
+// gulp.task('game-compress',function(){
+// 	return gulp.src([src.game.libs, src.game.js])
+// 	.pipe(sourcemaps.init())
+// 	.pipe(concat(dest.game.concatFile))
+// 	//.pipe(uglify())
+// 	.pipe(sourcemaps.write())
+// 	.pipe(gulp.dest(dest.game.concatFolder));
+// })
+
+gulp.task('example-copy-watch',  ["game-coffee"], function(){
+	return gulp.src(src.copy.gameFiles)
+	.pipe(copy(dest.gameCopy))
+})
+
+gulp.task('example-copy', ["game-coffee"], function(){
+	return gulp.src(src.copy.gameFiles)
+	.pipe(copy(dest.gameCopy))
+})
+
+gulp.task('make',['example-coffee','example-stylus','game-coffee','example-copy']);
+
+
+
+gulp.task('watch', ['make'],function() {
   gulp.watch(src.example.coffee, ['example-coffee']);
   gulp.watch(src.example.stylus, ['example-stylus']);
   gulp.watch(src.game.coffee, ['game-coffee']);
-  gulp.watch(src.game.js, ['game-concat']);
+  gulp.watch(src.game.compiled, ['example-copy-watch']);
 });
 
 gulp.task('default', ['watch']);
