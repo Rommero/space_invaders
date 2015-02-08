@@ -1,34 +1,41 @@
 class ResourceLoader extends EventEmitter2
-	constructor : (imageList,callback)->
-		if _.isString imageList
-			imageList = [{url : imageList, id : imageList}]
-		if _.isArray(imageList)
+
+	@RESOURCE_TYPE_IMG = "img"
+
+	@RESOURCE_TYPE_SOUND = "sound"
+
+	constructor : (resourceList,callback)->
+		if _.isArray(resourceList)
 			check = true 
-			check *= (_.isObject(imageData) and _.has(imageData,'url')) for imageData in imageList
+			for recourceData in resourceList
+				check *= (_.isObject(recourceData) and _.has(recourceData,'url') and _.has(recourceData,'type')) 
 			unless check
-				throw "ResourceLoader :: ResourceLoader accepts only String or String[]"
+				throw "ResourceLoader :: ResourceLoader accepts only valid recource objects"
 
-		@images = {}
+		@resources = {}
 
-		@loadImages imageList, callback
+		@loadResources resourceList, callback
 		
-	loadImages : (imageList,callback=->)->
-		async.each imageList, (imageData,eCallback)=>
-			img = new Image()
-
-			img.onload = =>
-				@images[imageData.id || imageData.url] = img
-
+	loadResources : (resourceList,callback=->)->
+		async.each resourceList, (recourceData,eCallback)=>			
+			if recourceData.type is ResourceLoader.RESOURCE_TYPE_IMG
+				img = new Image()
+				img.onload = =>
+					@resources[recourceData.id || recourceData.url] = img
+					eCallback null
+				img.src = recourceData.url
+			if recourceData.type is ResourceLoader.RESOURCE_TYPE_SOUND
+				sound = new Audio recourceData.url
+				@resources[recourceData.id || recourceData.url] = sound
 				eCallback null
-			img.src = imageData.url
 		, (err)=>
 			callback()
 			@emit "ready"
 
-	get : (imageId)->
-		unless _.has @images, imageId
-			throw "ResourceLoader :: Image not loaded"
-		@images[imageId]
+	get : (resId)->
+		unless _.has @resources, resId
+			throw "ResourceLoader :: Resource not loaded"
+		@resources[resId]
 
 window.ResourceLoader = ResourceLoader
 

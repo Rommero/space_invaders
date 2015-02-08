@@ -8,21 +8,30 @@ class Invader extends Sprite
 
 	DEFAULT_ANIMATION_STEP = 0
 	ANIMATION_STEP_DURATION = 1 # Updates every ANIMATION_STEP_DURATION'th frame
+	DEATH_ANIMATION_DURATION = 10 # Frames for death animation duration
 
 	
 
 	# In frames. Lesser the time, faster the Invader, therefore harder the game
 	# When set to 1 invaders go Zoidberg-style (\/)(;,.;)(\/) - (|)(;,.;)(|) - (\/)(;,.;)(\/)
-	DEFAULT_INVADER_REST_TIME = 60/3
+	DEFAULT_INVADER_REST_TIME = 60/2
 
-	DEFAULT_H_VELOCITY = Invader.SPRITE_WIDTH / 7
+	DEFAULT_H_VELOCITY = Invader.SPRITE_WIDTH / 15
 	DEFAULT_W_VELOCITY = 0
 	W_VELOCITY_MULTIPLIER = .7
 	VELOCITY_INERTIA_MULTIPLIER = .5
 	# Velocity {x : float,y : float}, pixels per animation frame 
 
-	INVADER_DELAY_MULTIPLIER  = 10
+	INVADER_DELAY_MULTIPLIER  = 1
 	INVADER_DELAY_MAGIC = 5
+
+	INVADER_CANNON_CHARGE_STRENGTH = 2
+	#TODO make fire chande independent of invader rest time
+	INVADER_FIRE_CHANCE = .03
+
+	INVADER_SPRITE_EXPLOSION_OFFSET = 
+		x : 0
+		y : 3 * 35
 
 	constructor : (@img, @type, @rank, @x, @y, @bounds, @scale)->		
 		@animationStep = 0 # 2 Animation Steps
@@ -53,12 +62,21 @@ class Invader extends Sprite
 			@displayHeight
 		)
 
-	update : (animationFrame,advanceFlags)->
+		@setDeathTimer DEATH_ANIMATION_DURATION
+
+	setDeathSound : (@deathSound)->		
+
+	update : (animationFrame,advanceFlag)->		
 		super()
 
-		if @isDestroyed()
-			return 
+		if @isDestroyed()			
+			return
 
+		if @isDying()
+			@deathSound.play()
+			@setSpritePos INVADER_SPRITE_EXPLOSION_OFFSET
+			return 
+		# Bug when using delay when velocity is high. Need to handle croud behaviour more precisely
 		invaderRankDelay = (INVADER_DELAY_MAGIC - @rank) * INVADER_DELAY_MULTIPLIER			
 		if animationFrame <= invaderRankDelay
 			return 	
@@ -68,26 +86,53 @@ class Invader extends Sprite
 		@idle = false
 		@restTimeLeft = @restTime	
 
-		@updateVelocity advanceFlags
+		@updateVelocity advanceFlag
 		@x += @velocity.x
 		@y += @velocity.y
+
+		if @isReloaded()
+			evilExtraterrestrialProjectile = @fire()
+
 		unless animationFrame % ANIMATION_STEP_DURATION == 0
-			return
+			return evilExtraterrestrialProjectile || null
 		@animationStep = 1 - @animationStep
 		@spriteX = @animationStep * Invader.SPRITE_WIDTH
+		return evilExtraterrestrialProjectile || null
+
+	isReloaded : ->
+		Math.random() < INVADER_FIRE_CHANCE
+
+	fire : ->
+		barrelCoords = @getCannonBarrelCoords()	
+
+		return new Projectile(
+			barrelCoords.x, 
+		 	barrelCoords.y, 
+			@,
+			{ x : 0, y : INVADER_CANNON_CHARGE_STRENGTH}, 
+			@bounds,
+			@scale
+		)	
+
+	# Why not poly Invader of Cannon then?
+	# TODO: Create class 'Shoota' able to fire. Inherit Invader and Cannon from Shoota 
+	getCannonBarrelCoords : ->
+		coords = 	
+			x : @x + @displayWidth/ 2
+			y : @y	
+
+
 
 	# Invaders are qiute fearful creatures. 
 	# They advance only if one of them decides to and wait for the last one in rank to make such a decision
 	checkAdvance : (rank)->
-		unless rank == @rank
-			return false				
 		return (@x + @displayWidth*sign(@velocity.x) + @velocity.x >= @bounds.x.max) or 
 			(@x + @displayWidth*sign(@velocity.x) + @velocity.x <= @bounds.x.min)
 
-	updateVelocity : (advanceFlags)->
-		# console.log advanceFlag
+	updateVelocity : (advanceFlag)->
 		@velocity.y = 0
-		if advanceFlags[@rank]
+		# if advanceFlags[@rank] 
+		if advanceFlag
 			@velocity.x = - @velocity.x
 			@velocity.y = W_VELOCITY_MULTIPLIER * @displayHeight		
 

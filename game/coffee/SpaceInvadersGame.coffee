@@ -6,18 +6,28 @@ class SpaceInvadersGame extends EventEmitter2
 	INVADER_SPRITE = "sprites/invaders.png"
 	CANNON_SPRITE = "sprites/cannon.png"
 	BG_COLOR = "#000"
+	GAME_OVER_COLOR = "#FF0000"
 	REDRAW_RATE = 1
 
 	HEADER_HEIGHT = 100
 	FOOTER_HEIGHT = 75
 	SIDE_OFFSET = 25
 
+
+	# TODO SoundEmitter class to handle sounds
+	SOUNDS = {
+		bgSounds : ["sounds/bg1.mp3", "sounds/bg2.mp3", "sounds/bg3.mp3", "sounds/bg4.mp3"]
+		projectile : "sounds/projectile.mp3"
+		invaderDeath : "sounds/invader_death.mp3"
+		cannonDeath : "sounds/cannon_death.mp3"
+	}	
+
 	INVADERS_PER_RANK = 11 # Yeah, ranks. Like in real army
 
 	FREE_H_SPACE = 4 # Free space (1 unit = 1 Invader display width) for Invaders to move. 
 
 	H_SPACE_PER_INVADER_MULTIPLIER = 1.4
-	W_SPACE_PER_INVADER_MULTIPLIER = 1.8
+	W_SPACE_PER_INVADER_MULTIPLIER = 2
 
 	CLEAR_SCALE = .3 
 
@@ -25,9 +35,16 @@ class SpaceInvadersGame extends EventEmitter2
 		currentDir = getJsFileDir "SpaceInvaders.js"
 
 		@resources = new ResourceLoader [
-			{url : currentDir + INVADER_SPRITE, id : INVADER_SPRITE}
-			{url : currentDir + CANNON_SPRITE, id : CANNON_SPRITE}
-		], =>
+			{url : currentDir + INVADER_SPRITE, id : INVADER_SPRITE, type : ResourceLoader.RESOURCE_TYPE_IMG}
+			{url : currentDir + CANNON_SPRITE, id : CANNON_SPRITE, type : ResourceLoader.RESOURCE_TYPE_IMG}
+			{url : currentDir + SOUNDS.bgSounds[0], id : SOUNDS.bgSounds[0], type : ResourceLoader.RESOURCE_TYPE_SOUND}
+			{url : currentDir + SOUNDS.bgSounds[1], id : SOUNDS.bgSounds[1], type : ResourceLoader.RESOURCE_TYPE_SOUND}
+			{url : currentDir + SOUNDS.bgSounds[2], id : SOUNDS.bgSounds[2], type : ResourceLoader.RESOURCE_TYPE_SOUND}
+			{url : currentDir + SOUNDS.bgSounds[3], id : SOUNDS.bgSounds[3], type : ResourceLoader.RESOURCE_TYPE_SOUND}
+			{url : currentDir + SOUNDS.projectile, id : SOUNDS.projectile, type : ResourceLoader.RESOURCE_TYPE_SOUND}
+			{url : currentDir + SOUNDS.invaderDeath, id : SOUNDS.invaderDeath, type : ResourceLoader.RESOURCE_TYPE_SOUND}
+			{url : currentDir + SOUNDS.cannonDeath, id : SOUNDS.cannonDeath, type : ResourceLoader.RESOURCE_TYPE_SOUND}
+		], =>			
 			@init()
 
 	init : ->		
@@ -40,9 +57,13 @@ class SpaceInvadersGame extends EventEmitter2
 
 		@ctx.globalAlpha = 1 
 
+		@gameOver = false
+
 		@startGame()
 
 	initGameField : ->
+
+		#TODO Dynamic game field based on screen width
 		@gameField = 
 			x : SIDE_OFFSET
 			y : HEADER_HEIGHT
@@ -84,7 +105,7 @@ class SpaceInvadersGame extends EventEmitter2
 		for type,rank in @invaderRanks
 			for i in [0..INVADERS_PER_RANK-1]
 
-				@invaders.push new Invader(
+				invader = new Invader(
 					@resources.get(INVADER_SPRITE),
 					type, 
 					rank,				
@@ -94,6 +115,10 @@ class SpaceInvadersGame extends EventEmitter2
 					@invaderScale
 				) 
 
+				invader.setDeathSound @resources.get SOUNDS.invaderDeath
+
+				@invaders.push invader
+
 	vivaLaResistance : ->
 		@cannon = new Cannon(
 			@resources.get(CANNON_SPRITE),
@@ -102,6 +127,9 @@ class SpaceInvadersGame extends EventEmitter2
 			@gameFieldBounds,
 			@invaderScale
 		)
+
+		@cannon.setFireSound @resources.get SOUNDS.projectile
+		@cannon.setDeathSound @resources.get SOUNDS.cannonDeath
 
 	startGame : ->
 		@invaders = []
@@ -113,6 +141,20 @@ class SpaceInvadersGame extends EventEmitter2
 
 		@frame = 0
 		@animationFrame = 0
+
+		timeForBgSound = 900
+		setInterval =>
+			@resources.get(SOUNDS.bgSounds[0]).play()
+			setTimeout =>
+				@resources.get(SOUNDS.bgSounds[1]).play()
+				setTimeout =>
+					@resources.get(SOUNDS.bgSounds[2]).play()
+					setTimeout =>
+						@resources.get(SOUNDS.bgSounds[3]).play()
+					, timeForBgSound
+				, timeForBgSound
+			, timeForBgSound
+		, timeForBgSound*4
 	
 		gameStep = =>
 			@update()
@@ -124,35 +166,128 @@ class SpaceInvadersGame extends EventEmitter2
 		@ctx.clearRect @gameField.x, @gameField.y, @gameField.width, @gameField.height
 
 	update : ->
+		# TODO - make it prettier		
+
 		@frame++ 
 		
 		unless @frame % REDRAW_RATE == 0
+			return
+
+		if @gameOver
 			return
 
 		@clearGameField()	
 		@animationFrame++ 
 
 		for projectile in @projectiles
-			projectile.update()	
+			projectile.update()		
 
-		advanceFlags = []
-		advanceFlags[rankId] = false for rankType,rankId in @invaderRanks
+
+		#TODO create class 'MasterMind' to handle invaders croud behavior
+		# Very very bad code here. Very bad code.
+		# currentMaximumInvaderRank = 0
+		# for invader in @invaders
+		# 	currentMaximumInvaderRank = Math.max currentMaximumInvaderRank, invader.rank
+
+		# advanceFlags = []
+		# for rankId in @invaderRanks
+		# 	advanceFlags[rankId] = rankId > currentMaximumInvaderRank 
+
+		# for invader in @invaders
+		# 	advanceFlags[invader.rank] = advanceFlags[invader.rank] or invader.checkAdvance(invader.rank)	
+
+		# for flag1,idx1 in advanceFlags.slice(-1)
+		# 	console.log flag1,idx1
+		# 	for flag2, idx2 in advanceFlags[idx1..].slice(-1)
+		# 		advanceFlags[idx1] = false if advanceFlags[idx2] == false
+
+		advanceFlag = false
+		for invader in @invaders
+			advanceFlag = advanceFlag or invader.checkAdvance()
 
 		for invader in @invaders
-			advanceFlags[invader.rank] = advanceFlags[invader.rank] or invader.checkAdvance(invader.rank)	
+			invaderMoveOutcome = invader.update @animationFrame, advanceFlag
+			if invaderMoveOutcome instanceof Projectile
+				@projectiles.push invaderMoveOutcome
 
-		for invader in @invaders
-			invader.update @animationFrame, advanceFlags
+		# Bad code ends here
 
+		@checkCollisions()	
 
 		@handleKeyboardInteraction()
+
+		@checkDestroyedObjects()
+
+		@checkGameOver()
+
+	checkGameOver : ->
+		unless @cannon
+			@gameOver = true
+			return true
+		for invader in @invaders
+			if invader.y + invader.displayHeight > @cannon.y
+				@gameOver = true
+
+	checkCollisions : ->
+		for projectile in @projectiles
+			for invader in @invaders
+				if checkProjectileCollision(projectile,invader)
+					invader.destroy() 
+					projectile.destroy()
+			unless @cannon
+				continue		
+			if checkProjectileCollision projectile, @cannon
+				projectile.destroy()
+				@cannon.destroy()
+
+	checkProjectileCollision = (projectile,target)->
+		collision = checkCollision(projectile,target)
+		unless collision
+			return false
+
+		return getObjectClass(projectile.owner) != getObjectClass(target)
+
+	#Horrible Piece of bullshit for IE. The game will NOT support IE in further versions
+	getObjectClass = (obj)->
+        if obj and obj.constructor and obj.constructor.toString()
+            if obj.constructor.name 
+                return obj.constructor.name
+            
+            str = obj.constructor.toString()
+           
+            if str.charAt(0) == '['
+            	arr = str.match(/\[\w+\s*(\w+)\]/)
+            else
+            	arr = str.match(/function\s*(\w+)/)
+            
+            if arr and arr.length == 2
+               return arr[1]                                 
+     	
+     	
+   
+
+
+	# TODO: create class 'Collidable' to handle collisions easier
+	checkCollision = (a,b)->
+		horizontalCheck = (a.x + a.displayWidth < b.x) or (b.x + b.displayWidth < a.x)
+		verticalCheck = (a.y + a.displayHeight < b.y) or (b.y + b.displayHeight < a.y)
+
+		not (horizontalCheck or verticalCheck)
 
 	checkDestroyedObjects : ->
 		@projectiles = _.filter @projectiles,(projectile)-> not projectile.isDestroyed()
 
 		@invaders = _.filter @invaders,(invader)-> not invader.isDestroyed()
 
-	handleKeyboardInteraction : ->		
+		unless @cannon
+			return
+		if @cannon.isDestroyed() 
+			@cannon = null 
+			@gameOver = true
+
+	handleKeyboardInteraction : ->
+		unless @cannon
+			return		
 		if @controls.isDown(Keyboard.KEY_CODE_LEFT)
 			@cannon.update @animationFrame, Cannon.DIRECTION_LEFT
 		else if @controls.isDown(Keyboard.KEY_CODE_RIGHT)
@@ -163,13 +298,19 @@ class SpaceInvadersGame extends EventEmitter2
 			@projectiles.push @cannon.fire @animationFrame if @cannon.isReloaded()
 	
 	render : ->
+		if @gameOver
+			@ctx.fillStyle = GAME_OVER_COLOR
+			@ctx.fillRect Math.floor(Math.random()*CANVAS_WIDTH),
+				Math.floor(Math.random()*CANVAS_HEIGHT),5,5
+
 		for projectile in @projectiles			
 			projectile.render @ctx 
 
 		for invader in @invaders
 			invader.render @ctx
 
-		@cannon.render @ctx, @animationFrame
+		if @cannon
+			@cannon.render @ctx, @animationFrame
 
 	getJsFileDir = (filename)->
 		reg = ".*#{filename}.*"

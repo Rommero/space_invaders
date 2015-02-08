@@ -1,35 +1,3 @@
-class Projectile extends Destroyable
-
-	@WIDTH = 3
-	@HEIGHT = 15
-
-	@COLOR = "#ffffff"
-
-	constructor : (@x, @y, @owner, @velocity, @bounds, @scale)->
-		@displayWidth = Projectile.WIDTH * @scale
-		@displayHeight = Projectile.HEIGHT * @scale
-
-		super()
-
-	update : (animationFrame)->
-		super()
-
-		if @isDestroyed()
-			return 
-
-		@y += @velocity.y
-
-		if @y < @bounds.y.min
-			@destroy()
-
-	render : (ctx)->
-		if @isDestroyed()
-			return 
-		# bckupFillStyle = ctx.fillStyle
-		ctx.fillStyle = Projectile.COLOR
-		ctx.fillRect @x - @displayWidth/2, @y, @displayWidth, @displayHeight	
-		# ctx.fillStyle = bckupFillStyle
-
 class Cannon extends Sprite
 	@SPRITE_WIDTH = 49
 	@SPRITE_HEIGHT = 30
@@ -39,6 +7,10 @@ class Cannon extends Sprite
 
 	CANNON_DEPLOYMENT_DELAY = 60 # Animation frames before the cannon appears
 	SPEED_MULTIPLIER = 4
+
+	DEATH_ANIMATION_DURATION = 60
+	DEATH_ANIMATION_FRAME_DURATION = DEATH_ANIMATION_DURATION / 10
+	DEATH_ANIMATION_OFFSET = 30
 
 	CANNON_CHARGE_STRENGTH = 10
 
@@ -65,6 +37,14 @@ class Cannon extends Sprite
 			@displayHeight
 		)		
 
+		@deathAnimationFrame = 1
+		@deathAnimationFrameStep = 0
+		@setDeathTimer DEATH_ANIMATION_DURATION
+
+	setFireSound : (@fireSound)->
+
+	setDeathSound : (@deathSound)->
+
 	fire : (animationFrame)->
 		unless @isReloaded()
 			return
@@ -77,6 +57,7 @@ class Cannon extends Sprite
 			@bounds,
 			@scale
 		)
+		@fireSound.play()
 		@loadCannon()				
 		return projectile
 
@@ -102,8 +83,21 @@ class Cannon extends Sprite
 
 
 	update : (animationFrame, direction)->
+		super()
 		unless @init
 			return
+
+		if @isDestroyed()			
+			return
+
+		if @isDying()
+			@deathSound.play()			
+			if @deathAnimationFrameStep-- == 0
+				@deathAnimationFrameStep = DEATH_ANIMATION_FRAME_DURATION
+				@deathAnimationFrame = 1 - @deathAnimationFrame						
+				@setSpritePos 
+					y : Cannon.SPRITE_HEIGHT * ( @deathAnimationFrame + 1 )				
+				return
 
 		@checkReload()
 
@@ -119,8 +113,8 @@ class Cannon extends Sprite
 	render : (ctx,animationFrame)->
 		unless animationFrame > CANNON_DEPLOYMENT_DELAY
 			return 
-		@init = true
-		super ctx
+		@init = true		
+		super
 
 
 window.Cannon = Cannon	

@@ -12,20 +12,8 @@ class Keyboard
 			@keysDown[event.keyCode] = true 			
 		document.addEventListener "keyup", (event)=>						
 			delete @keysDown[event.keyCode]
-			# delete @keysPressed[event.keyCode]
 
-	isDown : (keyCode)->
-		console.log @keysDown
+	isDown : (keyCode)->	
 		return _.has(@keysDown,keyCode)
-
-	isPressed : (keyCode)->
-		console.log @keysDown, @keysPressed
-		if @isDown keyCode
-			@keysPressed[keyCode] = true
-			return true
-
-		if _.has @keysPressed, keyCode
-			return false
-		return false
 
 window.Keyboard = Keyboard

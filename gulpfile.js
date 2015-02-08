@@ -14,11 +14,20 @@ src = {
 			"game/SpaceInvaders.js",
 			"game/sprites/invaders.png",
 			"game/sprites/cannon.png",
+			"game/sounds/cannon.png",
+			"game/sounds/bg1.mp3",
+			"game/sounds/bg2.mp3",
+			"game/sounds/bg3.mp3",
+			"game/sounds/bg4.mp3",
+			"game/sounds/projectile.mp3",
+			"game/sounds/invader_death.mp3",
+			"game/sounds/cannon_death.mp3",
 		]		
 	},
 	game : {
 		coffee : [
 			"game/coffee/Destroyable.coffee",
+			"game/coffee/Projectile.coffee",
 			"game/coffee/Sprite.coffee",
 			"game/coffee/Cannon.coffee",
 			"game/coffee/Invader.coffee",
