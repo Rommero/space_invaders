@@ -23,7 +23,7 @@ class SpaceInvadersGame extends EventEmitter2
 	}
 
 	BGSOUND_FRAME_DELAY = 60	
-	BGSOUND_SPEED_MULTIPLIER = 500
+	BGSOUND_SPEED_MULTIPLIER = 400
 
 	INVADERS_PER_RANK = 11 # Yeah, ranks. Like in real army
 
