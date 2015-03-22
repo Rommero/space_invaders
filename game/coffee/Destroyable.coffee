@@ -1,5 +1,6 @@
-class Destroyable
+class Destroyable extends Soundy
 	constructor : (deathTime = 0)->	
+		super()
 		@deathTimer = deathTime
 		@_isDestroyed = false
 		@_isDying = false
