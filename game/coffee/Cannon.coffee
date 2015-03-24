@@ -6,7 +6,7 @@ class Cannon extends Sprite
 	@DIRECTION_RIGHT = 0
 
 	CANNON_DEPLOYMENT_DELAY = 60 # Animation frames before the cannon appears
-	SPEED_MULTIPLIER = 4
+	SPEED_MULTIPLIER = 3
 
 	DEATH_ANIMATION_DURATION = 60
 	DEATH_ANIMATION_FRAME_DURATION = DEATH_ANIMATION_DURATION / 10
@@ -95,6 +95,7 @@ class Cannon extends Sprite
 				@setSpritePos 
 					y : Cannon.SPRITE_HEIGHT * ( @deathAnimationFrame + 1 )				
 				return
+			return		
 
 		@checkReload()
 
