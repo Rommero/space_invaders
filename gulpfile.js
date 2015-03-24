@@ -26,6 +26,7 @@ src = {
 	},
 	game : {
 		coffee : [
+			"game/coffee/Soundy.coffee",
 			"game/coffee/Destroyable.coffee",
 			"game/coffee/Projectile.coffee",
 			"game/coffee/Sprite.coffee",
@@ -86,7 +87,7 @@ gulp.task('game-coffee',function(){
 // 	.pipe(sourcemaps.write())
 // 	.pipe(gulp.dest(dest.game.concatFolder));
 // })
-
+G:
 gulp.task('example-copy-watch',  ["game-coffee"], function(){
 	return gulp.src(src.copy.gameFiles)
 	.pipe(copy(dest.gameCopy))
@@ -98,8 +99,6 @@ gulp.task('example-copy', ["game-coffee"], function(){
 })
 
 gulp.task('make',['example-coffee','example-stylus','game-coffee','example-copy']);
-
-
 
 gulp.task('watch', ['make'],function() {
   gulp.watch(src.example.coffee, ['example-coffee']);

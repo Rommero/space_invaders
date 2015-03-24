@@ -64,8 +64,6 @@ class Invader extends Sprite
 
 		@setDeathTimer DEATH_ANIMATION_DURATION
 
-	setDeathSound : (@deathSound)->		
-
 	update : (animationFrame,advanceFlag)->		
 		super()
 
@@ -73,7 +71,7 @@ class Invader extends Sprite
 			return
 
 		if @isDying()
-			@deathSound.play()
+			@playSound "death"
 			@setSpritePos INVADER_SPRITE_EXPLOSION_OFFSET
 			return 
 		# Bug when using delay when velocity is high. Need to handle croud behaviour more precisely

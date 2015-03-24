@@ -6,7 +6,7 @@ class Cannon extends Sprite
 	@DIRECTION_RIGHT = 0
 
 	CANNON_DEPLOYMENT_DELAY = 60 # Animation frames before the cannon appears
-	SPEED_MULTIPLIER = 4
+	SPEED_MULTIPLIER = 3
 
 	DEATH_ANIMATION_DURATION = 60
 	DEATH_ANIMATION_FRAME_DURATION = DEATH_ANIMATION_DURATION / 10
@@ -41,15 +41,11 @@ class Cannon extends Sprite
 		@deathAnimationFrameStep = 0
 		@setDeathTimer DEATH_ANIMATION_DURATION
 
-	setFireSound : (@fireSound)->
-
-	setDeathSound : (@deathSound)->
-
 	fire : (animationFrame)->
 		unless @isReloaded()
 			return
 		barrelCoords = @getCannonBarrelCoords()	
-		projectile = new Projectile(
+		projectile = new CannonProjectile(
 			barrelCoords.x, 
 			barrelCoords.y, 
 			@,
@@ -57,7 +53,8 @@ class Cannon extends Sprite
 			@bounds,
 			@scale
 		)
-		@fireSound.play()
+		
+		projectile.setSound("fire",@getSoundCopy("fire"))
 		@loadCannon()				
 		return projectile
 
@@ -91,13 +88,14 @@ class Cannon extends Sprite
 			return
 
 		if @isDying()
-			@deathSound.play()			
+			@playSound "death"
 			if @deathAnimationFrameStep-- == 0
 				@deathAnimationFrameStep = DEATH_ANIMATION_FRAME_DURATION
 				@deathAnimationFrame = 1 - @deathAnimationFrame						
 				@setSpritePos 
 					y : Cannon.SPRITE_HEIGHT * ( @deathAnimationFrame + 1 )				
 				return
+			return		
 
 		@checkReload()
 

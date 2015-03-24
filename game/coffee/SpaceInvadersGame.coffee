@@ -20,7 +20,10 @@ class SpaceInvadersGame extends EventEmitter2
 		projectile : "sounds/projectile.mp3"
 		invaderDeath : "sounds/invader_death.mp3"
 		cannonDeath : "sounds/cannon_death.mp3"
-	}	
+	}
+
+	BGSOUND_FRAME_DELAY = 60	
+	BGSOUND_SPEED_MULTIPLIER = 400
 
 	INVADERS_PER_RANK = 11 # Yeah, ranks. Like in real army
 
@@ -58,6 +61,8 @@ class SpaceInvadersGame extends EventEmitter2
 		@ctx.globalAlpha = 1 
 
 		@gameOver = false
+
+		@currentSoundId = 0
 
 		@startGame()
 
@@ -106,7 +111,7 @@ class SpaceInvadersGame extends EventEmitter2
 			for i in [0..INVADERS_PER_RANK-1]
 
 				invader = new Invader(
-					@resources.get(INVADER_SPRITE),
+					@resources.getImage(INVADER_SPRITE),
 					type, 
 					rank,				
 					@gameField.x + i * @hSpacePerInvader, 
@@ -115,21 +120,23 @@ class SpaceInvadersGame extends EventEmitter2
 					@invaderScale
 				) 
 
-				invader.setDeathSound @resources.get SOUNDS.invaderDeath
+				invader.setSound "death", @resources.getSound SOUNDS.invaderDeath
 
 				@invaders.push invader
 
 	vivaLaResistance : ->
 		@cannon = new Cannon(
-			@resources.get(CANNON_SPRITE),
+			@resources.getImage(CANNON_SPRITE),
 			@gameField.x,
 			@gameField.y + @gameField.height - Cannon.SPRITE_HEIGHT * @invaderScale,
 			@gameFieldBounds,
 			@invaderScale
 		)
 
-		@cannon.setFireSound @resources.get SOUNDS.projectile
-		@cannon.setDeathSound @resources.get SOUNDS.cannonDeath
+		@cannon.setSounds [ 
+			{ name : "fire", sound : @resources.getSound SOUNDS.projectile }
+			{ name : "death", sound : @resources.getSound SOUNDS.cannonDeath }
+		]
 
 	startGame : ->
 		@invaders = []
@@ -142,26 +149,22 @@ class SpaceInvadersGame extends EventEmitter2
 		@frame = 0
 		@animationFrame = 0
 
-		timeForBgSound = 900
-		setInterval =>
-			@resources.get(SOUNDS.bgSounds[0]).play()
-			setTimeout =>
-				@resources.get(SOUNDS.bgSounds[1]).play()
-				setTimeout =>
-					@resources.get(SOUNDS.bgSounds[2]).play()
-					setTimeout =>
-						@resources.get(SOUNDS.bgSounds[3]).play()
-					, timeForBgSound
-				, timeForBgSound
-			, timeForBgSound
-		, timeForBgSound*4
-	
 		gameStep = =>
 			@update()
 			@render()
 			window.requestAnimationFrame gameStep, @canvas	
 		window.requestAnimationFrame gameStep, @canvas
-			
+	
+	playMusic : (frame)->
+		@musicFrameCounter = @musicFrameCounter || 0
+		@musicFrameCounter++
+
+		@musicFrameDelay = BGSOUND_FRAME_DELAY - Math.floor(frame/BGSOUND_SPEED_MULTIPLIER)
+		if @musicFrameCounter >= @musicFrameDelay
+			@resources.getSound(SOUNDS.bgSounds[@currentSoundId]).play()	
+			@currentSoundId = if @currentSoundId >= 3 then 0 else @currentSoundId + 1
+			@musicFrameCounter = 0	
+
 	clearGameField : ->
 		@ctx.clearRect @gameField.x, @gameField.y, @gameField.width, @gameField.height
 
@@ -170,6 +173,8 @@ class SpaceInvadersGame extends EventEmitter2
 
 		@frame++ 
 		
+		@playMusic(@frame)
+
 		unless @frame % REDRAW_RATE == 0
 			return
 

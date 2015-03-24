@@ -36,4 +36,13 @@ class Projectile extends Destroyable
 		ctx.fillRect @x - @displayWidth/2, @y, @displayWidth, @displayHeight	
 		# ctx.fillStyle = bckupFillStyle
 
+class CannonProjectile extends Projectile
+	update : ->
+		super 
+		@playSound "fire"
+	destroy : ->
+		super
+		@stopSound "fire"
+
 window.Projectile = Projectile
+window.CannonProjectile = CannonProjectile

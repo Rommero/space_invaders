@@ -12,7 +12,8 @@ class ResourceLoader extends EventEmitter2
 			unless check
 				throw "ResourceLoader :: ResourceLoader accepts only valid recource objects"
 
-		@resources = {}
+		@images = {}
+		@sounds = {}
 
 		@loadResources resourceList, callback
 		
@@ -21,21 +22,26 @@ class ResourceLoader extends EventEmitter2
 			if recourceData.type is ResourceLoader.RESOURCE_TYPE_IMG
 				img = new Image()
 				img.onload = =>
-					@resources[recourceData.id || recourceData.url] = img
+					@images[recourceData.id || recourceData.url] = img
 					eCallback null
 				img.src = recourceData.url
 			if recourceData.type is ResourceLoader.RESOURCE_TYPE_SOUND
 				sound = new Audio recourceData.url
-				@resources[recourceData.id || recourceData.url] = sound
+				@sounds[recourceData.id || recourceData.url] = sound
 				eCallback null
 		, (err)=>
 			callback()
 			@emit "ready"
 
-	get : (resId)->
-		unless _.has @resources, resId
+	getImage : (resId)->
+		unless _.has @images, resId
 			throw "ResourceLoader :: Resource not loaded"
-		@resources[resId]
+		@images[resId]
+
+	getSound : (resId)->
+		unless _.has @sounds, resId
+			throw "ResourceLoader :: Resource not loaded"
+		@sounds[resId].cloneNode()	
 
 window.ResourceLoader = ResourceLoader
 
