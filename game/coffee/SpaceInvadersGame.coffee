@@ -13,6 +13,9 @@ class SpaceInvadersGame extends EventEmitter2
 	FOOTER_HEIGHT = 75
 	SIDE_OFFSET = 25
 
+	FONT = "SpaceInvaders"
+	FONT_SIZE = "16px"
+	FONT_COLOR = "#ffffff"
 
 	# TODO SoundEmitter class to handle sounds
 	SOUNDS = {
@@ -63,6 +66,10 @@ class SpaceInvadersGame extends EventEmitter2
 		@gameOver = false
 
 		@currentSoundId = 0
+
+		@interface = new SpaceInvadersInterface(FONT,FONT_SIZE,FONT_COLOR)
+
+		
 
 		@startGame()
 
@@ -166,7 +173,8 @@ class SpaceInvadersGame extends EventEmitter2
 			@musicFrameCounter = 0	
 
 	clearGameField : ->
-		@ctx.clearRect @gameField.x, @gameField.y, @gameField.width, @gameField.height
+		@ctx.clearRect 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT
+		# @ctx.clearRect @gameField.x, @gameField.y, @gameField.width, @gameField.height
 
 	update : ->
 		# TODO - make it prettier		
@@ -181,7 +189,7 @@ class SpaceInvadersGame extends EventEmitter2
 		if @gameOver
 			return
 
-		@clearGameField()	
+		
 		@animationFrame++ 
 
 		for projectile in @projectiles
@@ -303,6 +311,10 @@ class SpaceInvadersGame extends EventEmitter2
 			@projectiles.push @cannon.fire @animationFrame if @cannon.isReloaded()
 	
 	render : ->
+		@clearGameField()	
+
+		@interface.render @ctx
+
 		if @gameOver
 			@ctx.fillStyle = GAME_OVER_COLOR
 			@ctx.fillRect Math.floor(Math.random()*CANVAS_WIDTH),

@@ -1,0 +1,16 @@
+@font-face {
+	font-family:"SpaceInvaders";
+	src:
+		url("../fonts/space_invaders.eot?") format("eot"),
+		url("../fonts/space_invaders.woff") format("woff"),
+		url("../fonts/space_invaders.ttf") format("truetype"),
+		url("../fonts/space_invaders.svg#Space-Invaders") format("svg");
+	font-weight:normal;
+	font-style:normal;
+}
+
+p.test {
+	font-family: "SpaceInvaders";
+	color : #000000;
+	font-size: 24px;
+}

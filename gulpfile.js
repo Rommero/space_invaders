@@ -22,10 +22,14 @@ src = {
 			"game/sounds/projectile.mp3",
 			"game/sounds/invader_death.mp3",
 			"game/sounds/cannon_death.mp3",
+			"game/fonts/*.*",
+			"game/css/space-invaders.css"
 		]		
 	},
 	game : {
 		coffee : [
+			"game/coffee/TextField.coffee",
+			"game/coffee/SpaceInvadersInterface.coffee",	
 			"game/coffee/Soundy.coffee",
 			"game/coffee/Destroyable.coffee",
 			"game/coffee/Projectile.coffee",
